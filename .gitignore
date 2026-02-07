@@ -1,5 +1,6 @@
 data/
 artifacts/
+test/
 
 __pycache__/
 *.pyc
@@ -8,3 +9,5 @@ __pycache__/
 env/
 
 .DS_Store
+
+.idea/

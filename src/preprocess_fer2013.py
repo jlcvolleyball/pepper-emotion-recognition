@@ -1,22 +1,8 @@
 import argparse
 import random
 from pathlib import Path
-import shutil
-
-def gen_image_list(cat_loc):
-    """
-    Returns a list of the image file paths inside of the given directory
-    """
-    images = [file for file in cat_loc.iterdir() if file.isfile()]
-    return sorted(images)
-
-def remove(out_data):
-    """
-    Removes the directory out_data (if one exists, otherwise does nothing)
-    """
-    if not out_data.exists():
-        return
-    shutil.rmtree(out_data)
+from util import remove_directory, gen_image_list
+from config import ALL_LABELS
 
 def copy_file(src, dst):
     """
@@ -39,15 +25,14 @@ def process(raw_data, out_data, val_ratio):
         raise FileNotFoundError("Train and test folders are not present in your specified directory.")
 
     # if the out_data already exists, remove it safely
-    remove(out_data)
+    remove_directory(out_data)
     # create the training, validation, and testing directories in the out_data folder
     (out_data / "train").mkdir(parents=True, exist_ok=True)
     (out_data / "val").mkdir(parents=True, exist_ok=True)
     (out_data / "test").mkdir(parents=True, exist_ok=True)
     rand = random.Random()
 
-    categories = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
-    for cat in categories:
+    for cat in ALL_LABELS:
         # split the raw training into training and validation
         cat_train_loc = train_raw / cat
         if not cat_train_loc.exists():
@@ -78,6 +63,7 @@ def main():
     parser.add_argument("val_ratio", type=int, default=0.1)
     args = parser.parse_args()
 
+    # process into train, validation, and test
     process(args.raw_data, args.out_data, args.val_ratio)
 
 if __name__ == '__main__':
