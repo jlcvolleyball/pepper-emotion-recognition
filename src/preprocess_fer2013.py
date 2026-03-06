@@ -3,6 +3,7 @@ import random
 from pathlib import Path
 from util import remove_directory, gen_image_list
 from config import ALL_LABELS
+import shutil
 
 def copy_file(src, dst):
     """
@@ -58,9 +59,9 @@ def process(raw_data, out_data, val_ratio):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("raw_data", type=Path, default=Path("data/raw/fer2013"))
-    parser.add_argument("out_data", type=Path, default=Path("data/processed/fer2013"))
-    parser.add_argument("val_ratio", type=int, default=0.1)
+    parser.add_argument("raw_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_0.6"))
+    parser.add_argument("out_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_0.6_proc"))
+    parser.add_argument("val_ratio", type=int, nargs="?", default=0.1)
     args = parser.parse_args()
 
     # process into train, validation, and test

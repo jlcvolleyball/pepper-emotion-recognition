@@ -20,5 +20,5 @@ def gen_image_list(cat_loc):
     """
     Returns a list of the image file paths inside of the given directory
     """
-    images = [file for file in cat_loc.iterdir() if file.isfile()]
+    images = [file for file in cat_loc.iterdir() if file.is_file()]
     return sorted(images)
