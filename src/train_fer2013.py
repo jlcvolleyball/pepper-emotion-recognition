@@ -1,3 +1,12 @@
+"""
+train_fer2013.py
+
+This includes all the main training functionality necessary when running
+fer2013_default_pipeline.py. Includes augmentation, freezing layers, and
+weight decay. For more information on the pipeline, visit
+fer2013_default_pipeline.py.
+"""
+
 import argparse
 import numpy as np
 import torch

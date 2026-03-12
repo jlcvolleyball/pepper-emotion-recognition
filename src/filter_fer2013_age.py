@@ -1,3 +1,16 @@
+"""
+
+
+fer2013_default_pipeline.py
+
+This script runs the source code necessary for the full filtering, preprocessing, and
+training pipeline. The dataset used is FER2013, filtered into a subset that only
+includes faces from older adults. Training is completed using the ResNet50
+architecture on this subset. Augmentation, freezing, and weight decay are
+included during training (for more details, visit train_fer2013.py).
+
+"""
+
 import argparse
 from pathlib import Path
 from util import iter_images

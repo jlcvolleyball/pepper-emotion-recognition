@@ -1,3 +1,14 @@
+"""
+preprocess_fer2013.py
+
+This code runs the preprocessing for the pipeline for the FER2013 dataset. The
+dataset did not include a validation set, so this preprocessing code separates
+the given train set (using some user-inputted ratio, or default to 0.1) into
+the training and validation set.
+
+For more details on the entire pipeline, visit fer2013_default_pipeline.py
+"""
+
 import argparse
 import random
 from pathlib import Path
@@ -61,7 +72,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("raw_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_0.6"))
     parser.add_argument("out_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_0.6_proc"))
-    parser.add_argument("val_ratio", type=int, nargs="?", default=0.1)
+    parser.add_argument("val_ratio", type=float, nargs="?", default=0.1)
     args = parser.parse_args()
 
     # process into train, validation, and test
