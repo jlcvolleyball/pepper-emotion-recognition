@@ -70,8 +70,8 @@ def process(raw_data, out_data, val_ratio):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("raw_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_0.6"))
-    parser.add_argument("out_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_0.6_proc"))
+    parser.add_argument("raw_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older"))
+    parser.add_argument("out_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_proc"))
     parser.add_argument("val_ratio", type=float, nargs="?", default=0.1)
     args = parser.parse_args()
 

@@ -26,9 +26,9 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("data", type=Path, nargs="?", default=Path("data/raw/fer2013/test"))
-    parser.add_argument("min_conf", type=float, nargs="?", default=0.50)  # only keep images if the age detector confidence >= min_conf
-    parser.add_argument("out", type=Path, nargs="?", default=Path("data/processed/fer2013_older_0.6/test"))
-    age_substr = ["60", "70", "80", "90", "elder"]
+    parser.add_argument("min_conf", type=float, nargs="?", default=0.60)  # only keep images if the age detector confidence >= min_conf
+    parser.add_argument("out", type=Path, nargs="?", default=Path("data/processed/fer2013_older/test"))
+    age_substr = ["50", "60", "70", "80", "90", "elder"]
     ages = [s.lower() for s in age_substr]
     args = parser.parse_args()
 

@@ -140,25 +140,27 @@ def train_one_stage(stage, model, dataset, output_dir, epochs, lr, batch):
         compute_metrics=make_metrics_fn(),
     )
     trainer.train()
+    train_metrics = trainer.evaluate(dataset["train"])
     val_metrics = trainer.evaluate(dataset["validation"])
     test_metrics = trainer.evaluate(dataset["test"])
     trainer.save_model(str(output_dir))
 
     print(f"\nFinished {stage}")
+    print("Train metrics:", train_metrics)
     print("Validation metrics:", val_metrics)
     print("Test metrics:", test_metrics)
 
-    return trainer, val_metrics, test_metrics
+    return trainer, train_metrics, val_metrics, test_metrics
 
 def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     parser = argparse.ArgumentParser()
 
     parser.add_argument("full_data", type=Path, nargs="?", default=Path("data/processed/fer2013"))
-    parser.add_argument("subset_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_0.6_proc"))
+    parser.add_argument("subset_data", type=Path, nargs="?", default=Path("data/processed/fer2013_older_proc"))
     parser.add_argument("out_dir", type=Path, nargs="?", default=Path("artifacts/two_stage_resnet50"))
 
-    parser.add_argument("epochs1", type=int, nargs="?", default=15)
+    parser.add_argument("epochs1", type=int, nargs="?", default=50) # 15
     parser.add_argument("lr1", type=float, nargs="?", default=1e-4)
     parser.add_argument("batch1", type=int, nargs="?", default=16)
 
@@ -184,7 +186,7 @@ def main():
         id2label=full_idx_to_label,
         ignore_mismatched_sizes=True
     )
-    trainer1, stage1_val_metrics, stage1_test_metrics = train_one_stage(
+    trainer1, stage1_train_metrics, stage1_val_metrics, stage1_test_metrics = train_one_stage(
         "Stage 1 (Train on full FER2013)",
         stage1_model,
         full_dataset,
@@ -208,7 +210,7 @@ def main():
     # freeze backbone in stage 2
     for param in stage2_model.resnet.parameters():
         param.requires_grad = False
-    trainer2, stage2_val_metrics, stage2_test_metrics = train_one_stage(
+    trainer2, stage2_train_metrics, stage2_val_metrics, stage2_test_metrics = train_one_stage(
         "Stage 2 (Train on subset)",
         stage2_model,
         subset_dataset,
@@ -230,6 +232,7 @@ def main():
             "epochs": args.epochs1,
             "learning_rate": args.lr1,
             "batch_size": args.batch1,
+            "train_metrics": stage1_train_metrics,
             "validation_metrics": stage1_val_metrics,
             "test_metrics": stage1_test_metrics,
         },
@@ -238,6 +241,7 @@ def main():
             "epochs": args.epochs2,
             "learning_rate": args.lr2,
             "batch_size": args.batch2,
+            "train_metrics": stage2_train_metrics,
             "validation_metrics": stage2_val_metrics,
             "test_metrics": stage2_test_metrics,
         }
