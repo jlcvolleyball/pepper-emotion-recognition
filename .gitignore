@@ -1,6 +1,7 @@
 data/
 artifacts/
 test/
+inference_outputs/
 
 __pycache__/
 *.pyc

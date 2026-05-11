@@ -5,7 +5,6 @@ import json
 import cv2
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 import torch
@@ -15,6 +14,7 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.models as tvm
 import torchvision.transforms as T
 import torchaudio
+import wandb
 
 from transformers import Wav2Vec2Model, Wav2Vec2Processor
 
@@ -29,8 +29,8 @@ video_root = Path("data/processed/elderreact/clips")
 batch_size = 4
 num_workers = 2
 num_epochs = 10
-lr = 1e-4
-weight_decay = 1e-4
+lr = 3e-5
+weight_decay = 1e-3
 
 # video preprocessing settings
 num_frames = 16
@@ -40,14 +40,14 @@ audio_sr = 16000
 max_audio_seconds = 4.0
 
 # embedding and head sizes
-video_emb_dim = 256
-audio_emb_dim = 256
-hidden_dim = 256
-dropout = 0.3
+video_emb_dim = 128
+audio_emb_dim = 128
+hidden_dim = 128
+dropout = 0.5
 
 # whether or not to freeze pretrained
 freeze_audio_backbone = True
-freeze_video_backbone = False
+freeze_video_backbone = True
 
 device = "cpu"
 
@@ -669,12 +669,38 @@ def save_run_outputs(save_dir: Path, model: nn.Module, metrics: dict) -> None:
     with (save_dir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
 
-def run_video_only() -> nn.Module:
+def run_video_only() -> tuple[nn.Module, dict]:
     """
     Train and evaluate the video-only regression model, select best checkpoint
     using validation MAE
     """
     print("Running VIDEO-ONLY regression pipeline")
+
+    wandb.init(
+        project="elderreact-emotion-recognition",
+        name="video_only",
+        group="elderreact_comparison",
+        tags=["video-only", "regression"],
+        config={
+            "model_type": "video_only",
+            "batch_size": batch_size,
+            "num_epochs": num_epochs,
+            "lr": lr,
+            "weight_decay": weight_decay,
+            "num_frames": num_frames,
+            "frame_size": frame_size,
+            "video_emb_dim": video_emb_dim,
+            "hidden_dim": hidden_dim,
+            "dropout": dropout,
+            "freeze_video_backbone": freeze_video_backbone,
+            "seed": seed,
+            "min_valence": min_valence,
+            "max_valence": max_valence,
+            "criterion": "SmoothL1Loss"
+        },
+        reinit=True
+    )
+
     train_loader, val_loader, test_loader = build_video_dataloaders()
     model = VideoOnlyRegressor(
         video_emb_dim=video_emb_dim,
@@ -703,6 +729,15 @@ def run_video_only() -> nn.Module:
             min_valence=min_valence,
             max_valence=max_valence,
         )
+        wandb.log({
+            "train/loss": train_metrics["loss"],
+            "train/mae": train_metrics["mae"],
+            "train/rmse": train_metrics["rmse"],
+            "val/loss": val_metrics["loss"],
+            "val/mae": val_metrics["mae"],
+            "val/rmse": val_metrics["rmse"],
+            "best_val_mae_so_far": min(best_val_mae, val_metrics["mae"])
+        }, step=epoch + 1)
         print(f"[Video][Epoch {epoch + 1}/{num_epochs}]")
         print("  Train:", train_metrics)
         print("  Val:  ", val_metrics)
@@ -750,14 +785,56 @@ def run_video_only() -> nn.Module:
         metrics=all_metrics,
     )
 
-    return model
+    wandb.save(str(Path("artifacts/elderreact_video") / "best_model.pt"))
+    wandb.save(str(Path("artifacts/elderreact_video") / "metrics.json"))
 
-def run_video_audio() -> nn.Module:
+    wandb.log({
+        "test/loss": test_metrics["loss"],
+        "test/mae": test_metrics["mae"],
+        "test/rmse": test_metrics["rmse"],
+        "best_epoch": best_epoch,
+        "best_val_mae": best_val_mae,
+    })
+    wandb.finish()
+
+    return model, all_metrics
+
+def run_video_audio() -> tuple[nn.Module, dict]:
     """
-    rain and evaluate the video+audio regression model, select best checkpoint
+    Train and evaluate the video+audio regression model, select best checkpoint
     using validation MAE
     """
     print("Running VIDEO + AUDIO regression pipeline")
+
+    wandb.init(
+        project="elderreact-emotion-recognition",
+        name="video_audio",
+        group="elderreact_comparison",
+        tags=["video-audio", "multimodal", "regression"],
+        config={
+            "model_type": "video_audio",
+            "batch_size": batch_size,
+            "num_epochs": num_epochs,
+            "lr": lr,
+            "weight_decay": weight_decay,
+            "num_frames": num_frames,
+            "frame_size": frame_size,
+            "audio_sr": audio_sr,
+            "max_audio_seconds": max_audio_seconds,
+            "video_emb_dim": video_emb_dim,
+            "audio_emb_dim": audio_emb_dim,
+            "hidden_dim": hidden_dim,
+            "dropout": dropout,
+            "freeze_video_backbone": freeze_video_backbone,
+            "freeze_audio_backbone": freeze_audio_backbone,
+            "seed": seed,
+            "min_valence": min_valence,
+            "max_valence": max_valence,
+            "criterion": "SmoothL1Loss"
+        },
+        reinit=True
+    )
+
     train_loader, val_loader, test_loader = build_multimodal_dataloaders()
     model = VideoAudioRegressor(
         video_emb_dim=video_emb_dim,
@@ -794,6 +871,15 @@ def run_video_audio() -> nn.Module:
             min_valence=min_valence,
             max_valence=max_valence,
         )
+        wandb.log({
+            "train/loss": train_metrics["loss"],
+            "train/mae": train_metrics["mae"],
+            "train/rmse": train_metrics["rmse"],
+            "val/loss": val_metrics["loss"],
+            "val/mae": val_metrics["mae"],
+            "val/rmse": val_metrics["rmse"],
+            "best_val_mae_so_far": min(best_val_mae, val_metrics["mae"])
+        }, step=epoch + 1)
         print(f"[Video+Audio][Epoch {epoch + 1}/{num_epochs}]")
         print("  Train:", train_metrics)
         print("  Val:  ", val_metrics)
@@ -837,7 +923,20 @@ def run_video_audio() -> nn.Module:
         model=model,
         metrics=all_metrics,
     )
-    return model
+
+    wandb.save(str(Path("artifacts/elderreact_video_audio") / "best_model.pt"))
+    wandb.save(str(Path("artifacts/elderreact_video_audio") / "metrics.json"))
+
+    wandb.log({
+        "test/loss": test_metrics["loss"],
+        "test/mae": test_metrics["mae"],
+        "test/rmse": test_metrics["rmse"],
+        "best_epoch": best_epoch,
+        "best_val_mae": best_val_mae,
+    })
+    wandb.finish()
+
+    return model, all_metrics
 
 def set_seed(seed):
     """Helper function for reproducibility using set seeds"""
@@ -848,9 +947,76 @@ def set_seed(seed):
 
 def main():
     set_seed(seed)
-    video_model = run_video_only()
-    multimodal_model = run_video_audio()
-    _ = video_model, multimodal_model
+    video_model, video_metrics = run_video_only()
+    multimodal_model, multimodal_metrics = run_video_audio()
+
+    # log in wandb
+    wandb.init(
+        project="elderreact-emotion-recognition",
+        name="model_comparison",
+        group="elderreact_comparison",
+        tags=["comparison", "regression"],
+        reinit=True
+    )
+    comparison_rows = []
+    for v_epoch, m_epoch in zip(video_metrics["val"], multimodal_metrics["val"]):
+        comparison_rows.append([
+            v_epoch["epoch"],
+            v_epoch["mae"],
+            m_epoch["mae"],
+            v_epoch["rmse"],
+            m_epoch["rmse"],
+            v_epoch["loss"],
+            m_epoch["loss"],
+        ])
+
+    comparison_table = wandb.Table(
+        data=comparison_rows,
+        columns=[
+            "epoch",
+            "video_val_mae",
+            "video_audio_val_mae",
+            "video_val_rmse",
+            "video_audio_val_rmse",
+            "video_val_loss",
+            "video_audio_val_loss",
+        ],
+    )
+    wandb.log({"comparison/table": comparison_table})
+    wandb.log({
+        "compare/val_mae": wandb.plot.line_series(
+            xs=[row[0] for row in comparison_rows],
+            ys=[
+                [row[1] for row in comparison_rows],
+                [row[2] for row in comparison_rows],
+            ],
+            keys=["video_only", "video_audio"],
+            title="Validation MAE Comparison",
+            xname="Epoch",
+        ),
+        "compare/val_loss": wandb.plot.line_series(
+            xs=[row[0] for row in comparison_rows],
+            ys=[
+                [row[5] for row in comparison_rows],
+                [row[6] for row in comparison_rows],
+            ],
+            keys=["video_only", "video_audio"],
+            title="Validation Loss Comparison",
+            xname="Epoch",
+        ),
+        "compare/val_rmse": wandb.plot.line_series(
+            xs=[row[0] for row in comparison_rows],
+            ys=[
+                [row[3] for row in comparison_rows],
+                [row[4] for row in comparison_rows],
+            ],
+            keys=["video_only", "video_audio"],
+            title="Validation RMSE Comparison",
+            xname="Epoch",
+        ),
+    })
+
+    wandb.finish()
 
 
 if __name__ == '__main__':
