@@ -13,7 +13,7 @@ import argparse
 import random
 from pathlib import Path
 from util import remove_directory, gen_image_list
-from config import ALL_LABELS
+from util import ALL_LABELS
 import shutil
 
 def copy_file(src, dst):

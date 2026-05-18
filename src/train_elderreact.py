@@ -1,3 +1,15 @@
+"""
+train_elderreact.py
+
+Trains and evaluates Models 2 and 3 using the ElderReact Dataset. This script defines the:
+   - Video Encoder (ResNet-18 backbone)
+   - Audio Encoder (Wav2Vec2 backbone)
+   - Video-only regressor
+   - Video + Audio regressor
+Evaluation performed using RMSE, MAE, and regression loss. Saves best model checkpoints,
+train and val histories, and final test metrics
+"""
+
 import random
 from pathlib import Path
 import json

@@ -1,9 +1,16 @@
+"""
+create_test_subset.py
+
+Generates a subset of a dataset for coding test purposes. Not explicitly used
+in the training pipeline.
+"""
+
 import argparse
 import random
 import shutil
 from pathlib import Path
 from util import remove_directory, gen_image_list
-from config import ALL_LABELS
+from util import ALL_LABELS
 
 def main():
     parser = argparse.ArgumentParser()

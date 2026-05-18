@@ -1,14 +1,17 @@
 """
+filter_fer2013_age.py
 
-
-fer2013_default_pipeline.py
-
-This script runs the source code necessary for the full filtering, preprocessing, and
-training pipeline. The dataset used is FER2013, filtered into a subset that only
-includes faces from older adults. Training is completed using the ResNet50
-architecture on this subset. Augmentation, freezing, and weight decay are
-included during training (for more details, visit train_fer2013.py).
-
+This script executes part of the preprocessing pipeline for Model 1. It takes
+care of filtering FER2013 to produce a subset of images that are adults that are
+over 50 in age. We do so using an off-the-shelf HuggingFace model,
+       nateraw/vit-age-classifier
+We do so by:
+   1. Iterating through every image in FER2013
+   2. Run age classification on each image
+   3. Keep images that are within the desired age group
+   4. Apply minimum confidence threshold
+   5. Copies images to output directory
+   6. Outputs statistics
 """
 
 import argparse
@@ -21,7 +24,7 @@ from transformers import AutoImageProcessor, AutoModelForImageClassification
 from collections import Counter
 
 def main():
-    device = "cpu"   # device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cpu"
     model_name = "nateraw/vit-age-classifier"
 
     parser = argparse.ArgumentParser()

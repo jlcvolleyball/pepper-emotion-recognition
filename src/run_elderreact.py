@@ -1,3 +1,10 @@
+"""
+run_elderreact.py
+
+Runs inference and evaluation for Models 2 and 3 (video-only and multimodal) using
+the saved checkpoints
+"""
+
 import random
 from pathlib import Path
 import json

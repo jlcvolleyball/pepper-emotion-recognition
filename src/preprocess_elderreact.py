@@ -1,3 +1,10 @@
+"""
+preproess_elderreact.py
+
+Preprocesses raw ElderReact dataset into a CSV file with filename and
+valence score columns and copies video clips into processed data folder
+"""
+
 from __future__ import annotations
 
 import shutil

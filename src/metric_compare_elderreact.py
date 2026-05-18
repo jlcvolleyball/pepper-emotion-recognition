@@ -1,3 +1,10 @@
+"""
+metric_compare_elderreact.py
+
+Logs comparison plots to wandb for Model 2 + 3 (video only and multimodal models
+using the ElderReact dataset).
+"""
+
 import json
 from pathlib import Path
 import wandb

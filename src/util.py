@@ -1,5 +1,7 @@
 import shutil
 
+ALL_LABELS = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
+
 def remove_directory(out_data):
     """
     Removes the directory out_data (if one exists, otherwise does nothing)

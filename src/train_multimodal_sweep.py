@@ -1,3 +1,9 @@
+"""
+train_multimodal_sweep.py
+
+Runs a wandb hyperparameter sweep for Models 2 and 3
+"""
+
 import random
 import numpy as np
 from pathlib import Path
